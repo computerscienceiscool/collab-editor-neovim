@@ -1,5 +1,5 @@
--- File: nvim/lua/collab-editor/init.lua
--- Main entry point for collab-editor Neovim plugin
+-- File: lua/vimbeam/init.lua
+-- Main entry point for vimbeam Neovim plugin
 -- Works with Node.js helper for Automerge collaboration
 
 local M = {}
@@ -65,8 +65,8 @@ local function user_highlight_groups(user_id, color)
   end
 
   local safe_user = (user_id or 'user'):gsub('[^%w]', '_')
-  local label_group = 'CollabCursorLabel_' .. safe_user
-  local select_group = 'CollabCursorSel_' .. safe_user
+  local label_group = 'VimbeamCursorLabel_' .. safe_user
+  local select_group = 'VimbeamCursorSel_' .. safe_user
 
   local function ensure_group(name, fg, bg)
     if M.state.cursor_highlights[name] == bg then
@@ -101,7 +101,7 @@ function M.setup(opts)
   if not M.config.node_helper_path then
     local source = debug.getinfo(1).source
     if source:sub(1, 1) == '@' then
-      local plugin_path = source:sub(2):gsub('/lua/collab%-editor/init%.lua$', '')
+      local plugin_path = source:sub(2):gsub('/lua/vimbeam/init%.lua$', '')
       M.config.node_helper_path = plugin_path .. '/node-helper/index.js'
     end
   end
@@ -109,7 +109,7 @@ function M.setup(opts)
   M.setup_commands()
 
   if M.config.debug then
-    vim.notify('[collab] Plugin loaded', vim.log.levels.DEBUG)
+    vim.notify('[vimbeam] Plugin loaded', vim.log.levels.DEBUG)
   end
 end
 
@@ -131,7 +131,7 @@ function M.show_remote_cursor(user_id, name, color, anchor, head)
   
   -- Create namespace if needed
   if not M.state.cursor_ns then
-    M.state.cursor_ns = vim.api.nvim_create_namespace("collab_cursors")
+    M.state.cursor_ns = vim.api.nvim_create_namespace("vimbeam_cursors")
   end
   
   -- Clear previous cursor/selection for this user
@@ -243,40 +243,40 @@ end
 
 -- Setup user commands
 function M.setup_commands()
-  vim.api.nvim_create_user_command('CollabConnect', function()
+  vim.api.nvim_create_user_command('BeamConnect', function()
     M.connect()
   end, { desc = 'Connect to collaboration server' })
 
-  vim.api.nvim_create_user_command('CollabDisconnect', function()
+  vim.api.nvim_create_user_command('BeamDisconnect', function()
     M.disconnect()
   end, { desc = 'Disconnect from collaboration server' })
 
-  vim.api.nvim_create_user_command('CollabCreate', function()
+  vim.api.nvim_create_user_command('BeamCreate', function()
     M.create_document()
   end, { desc = 'Create new collaborative document' })
 
-  vim.api.nvim_create_user_command('CollabOpen', function(opts)
+  vim.api.nvim_create_user_command('BeamOpen', function(opts)
     M.open_document(opts.args)
   end, { nargs = 1, desc = 'Open collaborative document by ID' })
 
-  vim.api.nvim_create_user_command('CollabClose', function()
+  vim.api.nvim_create_user_command('BeamClose', function()
     M.close_document()
   end, { desc = 'Close current collaborative document' })
 
-  vim.api.nvim_create_user_command('CollabInfo', function()
+  vim.api.nvim_create_user_command('BeamInfo', function()
     M.show_info()
   end, { desc = 'Show connection info' })
 
-  vim.api.nvim_create_user_command('CollabUserName', function(opts)
+  vim.api.nvim_create_user_command('BeamUserName', function(opts)
     M.set_name(opts.args)
   end, { nargs = 1, desc = 'Set collaboration display name' })
 
-  vim.api.nvim_create_user_command('CollabUserColor', function(opts)
+  vim.api.nvim_create_user_command('BeamUserColor', function(opts)
     M.set_color_by_name(opts.args)
   end, { nargs = '?', desc = 'Set color by name (e.g., green, blue) or show picker if no arg' })
 
   -- Testing shortcut: connect (if needed) and open a doc in one step
-  vim.api.nvim_create_user_command('CollabQuick', function(opts)
+  vim.api.nvim_create_user_command('BeamQuick', function(opts)
     M.quick_connect_open(opts.args)
   end, { nargs = 1, desc = 'TESTING: Connect and open doc in one step' })
 end
@@ -287,32 +287,32 @@ function M.send(msg)
     local json = vim.fn.json_encode(msg) .. '\n'
     vim.fn.chansend(M.state.job_id, json)
     if M.config.debug then
-      vim.notify('[collab] Sent: ' .. vim.fn.json_encode(msg), vim.log.levels.DEBUG)
+      vim.notify('[vimbeam] Sent: ' .. vim.fn.json_encode(msg), vim.log.levels.DEBUG)
     end
   end
 end
 
 function M.set_name(name)
   if not name or name == '' then
-    vim.notify('[collab] Name required', vim.log.levels.ERROR)
+    vim.notify('[vimbeam] Name required', vim.log.levels.ERROR)
     return
   end
   M.config.user_name = name
   M.send({ type = 'set_name', name = name })
   if M.config.debug then
-    vim.notify('[collab] Set name to ' .. name, vim.log.levels.DEBUG)
+    vim.notify('[vimbeam] Set name to ' .. name, vim.log.levels.DEBUG)
   end
 end
 
 function M.set_color(color)
   if not color or color == '' then
-    vim.notify('[collab] Color required (e.g., #88cc88)', vim.log.levels.ERROR)
+    vim.notify('[vimbeam] Color required (e.g., #88cc88)', vim.log.levels.ERROR)
     return
   end
   M.config.user_color = color
   M.send({ type = 'set_color', color = color })
   if M.config.debug then
-    vim.notify('[collab] Set color to ' .. color, vim.log.levels.DEBUG)
+    vim.notify('[vimbeam] Set color to ' .. color, vim.log.levels.DEBUG)
   end
 end
 
@@ -362,7 +362,7 @@ function M.set_color_by_name(name)
   -- Check if it's a hex color
   if name:match('^#%x%x%x%x%x%x$') then
     M.set_color(name)
-    vim.notify('[collab] Color set to ' .. name, vim.log.levels.INFO)
+    vim.notify('[vimbeam] Color set to ' .. name, vim.log.levels.INFO)
     return
   end
 
@@ -370,9 +370,9 @@ function M.set_color_by_name(name)
   local color = M.find_color_by_name(name)
   if color then
     M.set_color(color.hex)
-    vim.notify('[collab] Color set to ' .. color.name .. ' (' .. color.hex .. ')', vim.log.levels.INFO)
+    vim.notify('[vimbeam] Color set to ' .. color.name .. ' (' .. color.hex .. ')', vim.log.levels.INFO)
   else
-    vim.notify('[collab] Unknown color: ' .. name .. '. Use :CollabUserColor to see options.', vim.log.levels.WARN)
+    vim.notify('[vimbeam] Unknown color: ' .. name .. '. Use :BeamUserColor to see options.', vim.log.levels.WARN)
   end
 end
 
@@ -395,7 +395,7 @@ function M.show_color_picker()
     if choice then
       local hex = hex_lookup[choice]
       M.set_color(hex)
-      vim.notify('[collab] Color set to ' .. choice, vim.log.levels.INFO)
+      vim.notify('[vimbeam] Color set to ' .. choice, vim.log.levels.INFO)
     end
   end)
 end
@@ -403,13 +403,13 @@ end
 -- Connect to collaboration server
 function M.connect()
   if M.state.connected then
-    vim.notify('[collab] Already connected', vim.log.levels.WARN)
+    vim.notify('[vimbeam] Already connected', vim.log.levels.WARN)
     return
   end
 
   local helper_path = M.config.node_helper_path
   if not helper_path or vim.fn.filereadable(helper_path) == 0 then
-    vim.notify('[collab] Node helper not found at: ' .. (helper_path or 'nil'), vim.log.levels.ERROR)
+    vim.notify('[vimbeam] Node helper not found at: ' .. (helper_path or 'nil'), vim.log.levels.ERROR)
     return
   end
 
@@ -422,7 +422,7 @@ function M.connect()
       for _, line in ipairs(data) do
         if line ~= '' then
           if M.config.debug then
-            vim.notify('[collab] Helper: ' .. line, vim.log.levels.DEBUG)
+            vim.notify('[vimbeam] Helper: ' .. line, vim.log.levels.DEBUG)
           end
         end
       end
@@ -435,7 +435,7 @@ function M.connect()
   })
 
   if M.state.job_id <= 0 then
-    vim.notify('[collab] Failed to start helper', vim.log.levels.ERROR)
+    vim.notify('[vimbeam] Failed to start helper', vim.log.levels.ERROR)
     M.state.job_id = nil
     return
   end
@@ -461,7 +461,7 @@ end
 -- Disconnect from server
 function M.disconnect()
   if not M.state.job_id then
-    vim.notify('[collab] Not connected', vim.log.levels.WARN)
+    vim.notify('[vimbeam] Not connected', vim.log.levels.WARN)
     return
   end
 
@@ -478,13 +478,13 @@ function M.disconnect()
     M.detach_buffer()
   end
 
-  vim.notify('[collab] Disconnected', vim.log.levels.INFO)
+  vim.notify('[vimbeam] Disconnected', vim.log.levels.INFO)
 end
 
 -- Create new document
 function M.create_document()
   if not M.state.connected then
-    vim.notify('[collab] Not connected. Run :CollabConnect first', vim.log.levels.ERROR)
+    vim.notify('[vimbeam] Not connected. Run :BeamConnect first', vim.log.levels.ERROR)
     return
   end
 
@@ -494,12 +494,12 @@ end
 -- Open existing document
 function M.open_document(doc_id)
   if not M.state.connected then
-    vim.notify('[collab] Not connected. Run :CollabConnect first', vim.log.levels.ERROR)
+    vim.notify('[vimbeam] Not connected. Run :BeamConnect first', vim.log.levels.ERROR)
     return
   end
 
   if not doc_id or doc_id == '' then
-    vim.notify('[collab] Document ID required', vim.log.levels.ERROR)
+    vim.notify('[vimbeam] Document ID required', vim.log.levels.ERROR)
     return
   end
 
@@ -509,7 +509,7 @@ end
 -- Close current document
 function M.close_document()
   if not M.state.doc_id then
-    vim.notify('[collab] No document open', vim.log.levels.WARN)
+    vim.notify('[vimbeam] No document open', vim.log.levels.WARN)
     return
   end
 
@@ -529,7 +529,7 @@ function M.show_info()
       'sync=' .. (M.config.sync_url or 'n/a'),
       'awareness=' .. (M.config.awareness_url or 'n/a'),
     }
-    vim.notify('[collab] ' .. table.concat(parts, ' | '), vim.log.levels.INFO)
+    vim.notify('[vimbeam] ' .. table.concat(parts, ' | '), vim.log.levels.INFO)
   end
 end
 
@@ -541,7 +541,7 @@ function M.on_stdout(data)
       if ok then
         M.handle_message(msg)
       elseif M.config.debug then
-        vim.notify('[collab] Invalid JSON: ' .. line, vim.log.levels.DEBUG)
+        vim.notify('[vimbeam] Invalid JSON: ' .. line, vim.log.levels.DEBUG)
       end
     end
   end
@@ -550,13 +550,13 @@ end
 -- Handle message from helper
 function M.handle_message(msg)
   if M.config.debug then
-    vim.notify('[collab] Received: ' .. vim.fn.json_encode(msg), vim.log.levels.DEBUG)
+    vim.notify('[vimbeam] Received: ' .. vim.fn.json_encode(msg), vim.log.levels.DEBUG)
   end
 
   if msg.type == 'connected' then
     M.state.connected = true
     M.state.user_id = msg.userId
-    vim.notify('[collab] Connected as ' .. msg.userId, vim.log.levels.INFO)
+    vim.notify('[vimbeam] Connected as ' .. msg.userId, vim.log.levels.INFO)
     if M.state.after_connect then
       local cb = M.state.after_connect
       M.state.after_connect = nil
@@ -566,17 +566,17 @@ function M.handle_message(msg)
   elseif msg.type == 'disconnected' then
     M.state.connected = false
     M.state.doc_id = nil
-    vim.notify('[collab] Disconnected', vim.log.levels.INFO)
+    vim.notify('[vimbeam] Disconnected', vim.log.levels.INFO)
     M.state.after_connect = nil
 
   elseif msg.type == 'created' then
     M.state.doc_id = msg.docId
-    vim.notify('[collab] Created document: ' .. msg.docId, vim.log.levels.INFO)
+    vim.notify('[vimbeam] Created document: ' .. msg.docId, vim.log.levels.INFO)
     M.attach_buffer('')
 
   elseif msg.type == 'opened' then
     M.state.doc_id = msg.docId
-    vim.notify('[collab] Opened document: ' .. msg.docId, vim.log.levels.INFO)
+    vim.notify('[vimbeam] Opened document: ' .. msg.docId, vim.log.levels.INFO)
     M.attach_buffer(msg.content or '')
 
   elseif msg.type == 'changed' then
@@ -585,7 +585,7 @@ function M.handle_message(msg)
   elseif msg.type == 'closed' then
     M.state.doc_id = nil
     M.detach_buffer()
-    vim.notify('[collab] Document closed', vim.log.levels.INFO)
+    vim.notify('[vimbeam] Document closed', vim.log.levels.INFO)
 
   elseif msg.type == 'cursor' then
     -- Remote cursor update - display in buffer
@@ -593,12 +593,12 @@ function M.handle_message(msg)
       M.show_remote_cursor(msg.userId, msg.name, msg.color, msg.anchor, msg.head)
     end
     if M.config.debug then
-      vim.notify('[collab] Cursor from ' .. (msg.name or msg.userId), vim.log.levels.DEBUG)
+      vim.notify('[vimbeam] Cursor from ' .. (msg.name or msg.userId), vim.log.levels.DEBUG)
     end
 
   elseif msg.type == 'info' then
     local info = string.format(
-      '[collab] Connected: %s | Doc: %s | User: %s',
+      '[vimbeam] Connected: %s | Doc: %s | User: %s',
       tostring(msg.connected),
       msg.docId or 'none',
       msg.userName or 'unknown'
@@ -606,14 +606,14 @@ function M.handle_message(msg)
     vim.notify(info, vim.log.levels.INFO)
 
   elseif msg.type == 'error' then
-    vim.notify('[collab] Error: ' .. (msg.message or 'unknown'), vim.log.levels.ERROR)
+    vim.notify('[vimbeam] Error: ' .. (msg.message or 'unknown'), vim.log.levels.ERROR)
   end
 end
 
 -- Quick testing helper: connect (if needed) and open a doc
 function M.quick_connect_open(doc_id)
   if not doc_id or doc_id == '' then
-    vim.notify('[collab] Document ID required', vim.log.levels.ERROR)
+    vim.notify('[vimbeam] Document ID required', vim.log.levels.ERROR)
     return
   end
 
@@ -632,7 +632,7 @@ function M.quick_connect_open(doc_id)
     M.connect()
   else
     if M.config.debug then
-      vim.notify('[collab] Waiting for connect to finish...', vim.log.levels.DEBUG)
+      vim.notify('[vimbeam] Waiting for connect to finish...', vim.log.levels.DEBUG)
     end
   end
 end
@@ -649,7 +649,7 @@ function M.attach_buffer(initial_content)
   end
 
   -- Create augroup for this buffer's autocmds (enables cleanup on detach)
-  M.state.autocmd_group = vim.api.nvim_create_augroup('CollabEditor_' .. bufnr, { clear = true })
+  M.state.autocmd_group = vim.api.nvim_create_augroup('Vimbeam_' .. bufnr, { clear = true })
 
   -- Set buffer content
   M.state.ignore_changes = true
@@ -665,7 +665,7 @@ function M.attach_buffer(initial_content)
   local function send_buffer_if_changed(reason)
     if M.state.ignore_changes then
       if M.config.debug then
-        vim.notify(string.format('[collab] skip send (%s): ignoring changes', reason or 'unknown'), vim.log.levels.DEBUG)
+        vim.notify(string.format('[vimbeam] skip send (%s): ignoring changes', reason or 'unknown'), vim.log.levels.DEBUG)
       end
       return
     end
@@ -675,7 +675,7 @@ function M.attach_buffer(initial_content)
     local tick = vim.api.nvim_buf_get_changedtick(bufnr)
     if tick == M.state.last_sent_tick then
       if M.config.debug then
-        vim.notify(string.format('[collab] skip send (%s): tick unchanged (%d)', reason or 'unknown', tick), vim.log.levels.DEBUG)
+        vim.notify(string.format('[vimbeam] skip send (%s): tick unchanged (%d)', reason or 'unknown', tick), vim.log.levels.DEBUG)
       end
       return
     end
@@ -684,7 +684,7 @@ function M.attach_buffer(initial_content)
     local buf_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
     local content = table.concat(buf_lines, '\n')
     if M.config.debug then
-      vim.notify(string.format('[collab] send (%s): tick %d len %d', reason or 'unknown', tick, #content), vim.log.levels.DEBUG)
+      vim.notify(string.format('[vimbeam] send (%s): tick %d len %d', reason or 'unknown', tick, #content), vim.log.levels.DEBUG)
     end
     M.send({ type = 'edit', content = content })
   end
@@ -771,7 +771,7 @@ function M.attach_buffer(initial_content)
   })
 
   if M.config.debug then
-    vim.notify('[collab] Attached to buffer ' .. bufnr, vim.log.levels.DEBUG)
+    vim.notify('[vimbeam] Attached to buffer ' .. bufnr, vim.log.levels.DEBUG)
   end
 end
 
@@ -844,7 +844,7 @@ function M.on_exit(code)
   M.state.after_connect = nil
   
   if code ~= 0 then
-    vim.notify('[collab] Helper exited with code ' .. code, vim.log.levels.WARN)
+    vim.notify('[vimbeam] Helper exited with code ' .. code, vim.log.levels.WARN)
   end
 end
 

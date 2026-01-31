@@ -1,10 +1,10 @@
--- Health check for collab-editor
--- Run with :checkhealth collab-editor
+-- Health check for vimbeam
+-- Run with :checkhealth vimbeam
 
 local M = {}
 
 M.check = function()
-  vim.health.start("collab-editor")
+  vim.health.start("vimbeam")
 
   -- Check Neovim version
   if vim.fn.has("nvim-0.8") == 1 then
@@ -25,7 +25,7 @@ M.check = function()
   local source = debug.getinfo(1).source
   local plugin_path = ""
   if source:sub(1, 1) == "@" then
-    plugin_path = source:sub(2):gsub("/lua/collab%-editor/health%.lua$", "")
+    plugin_path = source:sub(2):gsub("/lua/vimbeam/health%.lua$", "")
   end
 
   local helper_path = plugin_path .. "/node-helper/index.js"

@@ -1,8 +1,8 @@
 {
-  "name": "collab-editor-nvim-helper",
+  "name": "vimbeam-helper",
   "version": "1.0.0",
   "type": "module",
-  "description": "Node.js helper for Neovim collaborative editing via Automerge",
+  "description": "Node.js helper for vimbeam - Neovim collaborative editing via Automerge",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"

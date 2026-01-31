@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `lua/collab-editor/` contains the Neovim plugin Lua modules.
+- `lua/vimbeam/` contains the Neovim plugin Lua modules.
 - `node-helper/` contains the Node.js bridge to Automerge for document sync.
 - `plugin/` contains the Vim plugin loader script.
 - `docs/` contains documentation (protocol specs, etc.).
