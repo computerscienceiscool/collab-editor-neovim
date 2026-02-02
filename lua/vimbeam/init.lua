@@ -19,6 +19,13 @@ M.state = {
   after_connect = nil, -- deferred action to run after helper connects
   cursor_highlights = {}, -- memoized highlight groups keyed by user
   autocmd_group = nil,  -- augroup for buffer autocmds (cleanup on detach)
+    -- NEW: Storm-specific state
+  mode = nil,  -- 'automerge' or 'storm'
+  project_id = nil,  -- Storm project ID
+  chat_bufnr = nil,  -- Storm chat display buffer
+  file_selections = {},  -- Storm file In/Out tracking {filename -> {input=bool, output=bool}}
+  active_queries = {},  -- Storm pending queries {queryID -> {...}}
+  other_users = {},  -- Presence tracking {clientID -> {name, color}}
 }
 
 -- Configuration defaults
@@ -280,6 +287,23 @@ function M.setup_commands()
   vim.api.nvim_create_user_command('BeamQuick', function(opts)
     M.quick_connect_open(opts.args)
   end, { nargs = 1, desc = 'TESTING: Connect and open doc in one step' })
+
+    -- NEW: Storm-specific commands
+  vim.api.nvim_create_user_command('StormConnect', function()
+    M.connect_storm()
+  end, { desc = 'Connect to Storm server' })
+
+  vim.api.nvim_create_user_command('StormProject', function(opts)
+    if opts.args == '' then
+      M.list_storm_projects()
+    else
+      M.open_storm_project(opts.args)
+    end
+  end, { nargs = '?', desc = 'List or open Storm project' })
+
+  vim.api.nvim_create_user_command('StormDisconnect', function()
+    M.disconnect_storm()
+  end, { desc = 'Disconnect from Storm' })
 end
 
 -- Send JSON message to helper
