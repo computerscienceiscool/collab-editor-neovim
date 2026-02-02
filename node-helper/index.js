@@ -32,6 +32,11 @@ let userColor = '#88cc88';
 let currentDocId = null;
 let isApplyingRemote = false;
 let currentSelection = { anchor: 0 };
+// Storm state
+let stormWs = null;
+let stormMode = null;  // 'automerge' or 'storm'
+let stormProjectId = null;
+let stormHeartbeat = null;
 let changeHandler = null;  // Track change listener for cleanup
 
 // Storage directory for Automerge data
@@ -159,6 +164,84 @@ function connectAwareness(url) {
     }
   });
 }
+
+/**
+ * Connect to Storm WebSocket server
+ */
+function connectStorm(url, name, color) {
+  if (stormWs) {
+    log('Storm already connected');
+    return;
+  }
+
+  const wsUrl = url.replace(/^http/, 'ws') + '/ws';
+  log(`Connecting to Storm: ${wsUrl}`);
+
+  stormWs = new WebSocket(wsUrl);
+
+  stormWs.on('open', () => {
+    log('Storm WebSocket connected');
+    
+    // Send identify message
+    stormWs.send(JSON.stringify({
+      type: 'identify',
+      name: name,
+      color: color
+    }));
+
+    // Setup heartbeat
+    stormHeartbeat = setInterval(() => {
+      if (stormWs && stormWs.readyState === WebSocket.OPEN) {
+        stormWs.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 30000);
+
+    send({ type: 'storm_connected' });
+  });
+
+  stormWs.on('message', (data) => {
+    try {
+      const msg = JSON.parse(data.toString());
+      
+      // Forward Storm messages to Neovim
+      switch (msg.type) {
+        case 'presence':
+          send({ type: 'storm_presence', data: msg });
+          break;
+        case 'query':
+          send({ type: 'storm_query', data: msg });
+          break;
+        case 'response':
+          send({ type: 'storm_response', data: msg });
+          break;
+        case 'filesUpdated':
+          send({ type: 'storm_files_updated', data: msg });
+          break;
+        default:
+          log(`Unknown Storm message type: ${msg.type}`);
+      }
+    } catch (e) {
+      log(`Storm message parse error: ${e.message}`);
+    }
+  });
+
+  stormWs.on('error', (err) => {
+    log(`Storm WebSocket error: ${err.message}`);
+    send({ type: 'error', message: `Storm connection error: ${err.message}` });
+  });
+
+  stormWs.on('close', () => {
+    log('Storm WebSocket closed');
+    if (stormHeartbeat) {
+      clearInterval(stormHeartbeat);
+      stormHeartbeat = null;
+    }
+    stormWs = null;
+    send({ type: 'storm_disconnected' });
+  });
+}
+
+
 
 /**
  * Send awareness (presence/cursor) info
@@ -418,7 +501,23 @@ async function handleMessage(msg) {
         });
         break;
       }
-
+      case 'storm_connect': {
+        stormMode = 'storm';
+        if (msg.name) userName = msg.name;
+        if (msg.color) userColor = msg.color;
+        connectStorm(msg.stormUrl, userName, userColor);
+        break;
+      }
+      case 'storm_disconnect': {
+        if (stormWs) stormWs.close();
+        if (stormHeartbeat) clearInterval(stormHeartbeat);
+        stormWs = null;
+        stormHeartbeat = null;
+        stormMode = null;
+        stormProjectId = null;
+        send({ type: 'storm_disconnected' });
+        break;
+      }
       default:
         send({ type: 'error', message: `Unknown message type: ${msg.type}` });
     }
