@@ -29,6 +29,7 @@ M.config = {
   user_name = nil,
   user_color = nil,
   debug = false,
+  storm_url = nil,  -- e.g., 'http://localhost:8080'
 }
 
 -- Per-user highlight groups: use browser hex if valid, otherwise deterministic palette; defines both GUI and cterm colors so boxes render.
