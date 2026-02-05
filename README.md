@@ -29,10 +29,10 @@ You can use [automerge-repo-sync-server](https://github.com/automerge/automerge-
 npx @automerge/automerge-repo-sync-server --port 1234
 ```
 
-For the awareness server, you'll need a simple WebSocket broadcast server. A minimal example:
+For the awareness server, use [@collab-editor/awareness](https://github.com/computerscienceiscool/collab-awareness):
 
 ```bash
-npx y-websocket --port 1235
+npx @collab-editor/awareness --port 1235
 ```
 
 See [docs/PROTOCOL.md](docs/PROTOCOL.md) for details on running your own servers.
@@ -128,7 +128,7 @@ require('vimbeam').setup({
 
 | Command | Description |
 |---------|-------------|
-| `:BeamConnect` | Connect to the collaboration server |
+| `:BeamConnect [sync_url] [awareness_url]` | Connect to the collaboration server (uses defaults if no URLs provided) |
 | `:BeamDisconnect` | Disconnect from the server |
 | `:BeamCreate` | Create a new collaborative document |
 | `:BeamOpen <doc_id>` | Open an existing document by ID |
@@ -160,7 +160,9 @@ Available color names: Red, Orange, Yellow, Green, Teal, Blue, Purple, Pink, and
 The plugin consists of two parts:
 
 1. **Lua plugin** (`lua/vimbeam/`) - Neovim interface, buffer management, cursor display
-2. **Node.js helper** (`node-helper/`) - Automerge document sync via WebSocket
+2. **Node.js helper** (`node-helper/`) - Automerge document sync and presence via WebSocket
+
+The Node.js helper uses [@collab-editor/awareness](https://github.com/computerscienceiscool/collab-awareness) for cursor/presence synchronization, enabling real-time collaboration with browser users running [collab-editor](https://github.com/computerscienceiscool/collab-editor).
 
 Communication between Lua and Node.js happens via JSON messages over stdin/stdout. See [docs/PROTOCOL.md](docs/PROTOCOL.md) for details.
 
