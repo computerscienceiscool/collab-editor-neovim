@@ -2,7 +2,10 @@
 
 ## Pending
 
-(none)
+- [ ] J007 - Fix awareness documentId mismatch: viduct starts with `documentId: 'default'` because `connectAwareness()` runs before document open; browser filters by documentId and drops these messages
+- [ ] J008 - Fix browser never sending initial cursor position: `state.selection` is null on connect, no cursor broadcast until user physically interacts with editor
+- [ ] J009 - Fix `selectionchange` listener attached to `view.dom` instead of `document` in collab-web-editor; event only fires on `document`, so this listener silently does nothing
+- [ ] J010 - Verify sync server port alignment: viduct uses port 3030, check browser config matches; mismatched ports means different documents and awareness documentIds will never match
 
 ## Done
 
